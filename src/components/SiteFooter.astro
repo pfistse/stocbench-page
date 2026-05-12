@@ -1,0 +1,20 @@
+---
+type FooterLink = {
+  label: string;
+  href: string;
+};
+
+type Props = {
+  links: FooterLink[];
+};
+
+const { links } = Astro.props;
+---
+
+<footer class="site-footer">
+  <nav aria-label="Footer links">
+    {links.map((link) => (
+      <a href={link.href} target={link.href.startsWith("http") ? "_blank" : undefined} rel={link.href.startsWith("http") ? "noreferrer" : undefined}>{link.label}</a>
+    ))}
+  </nav>
+</footer>

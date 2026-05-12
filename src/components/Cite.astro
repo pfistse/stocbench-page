@@ -1,0 +1,15 @@
+---
+import { referenceIndex } from "../data/references";
+
+type Props = {
+  id: string;
+};
+
+const { id } = Astro.props;
+const num = referenceIndex[id];
+
+if (num === undefined) {
+  throw new Error(`<Cite>: unknown reference id "${id}". Add it to src/data/references.ts.`);
+}
+---
+<a class="cite" href={`#ref-${id}`} aria-label={`Reference ${num}`}>[{num}]</a>

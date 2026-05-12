@@ -1,0 +1,28 @@
+---
+type Props = {
+  caption: string;
+  videoSrc: string;
+  videoLabel: string;
+  widthPercent?: number;
+};
+
+const { caption, videoSrc, videoLabel, widthPercent } = Astro.props;
+const figureStyle =
+  widthPercent != null ? `width: ${widthPercent}%; max-width: ${widthPercent}%;` : undefined;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const resolvedSrc = `${base}/${videoSrc.replace(/^\//, "")}`;
+---
+
+<figure class="dataset-preview" style={figureStyle}>
+  <video
+    class="dataset-video"
+    src={resolvedSrc}
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="metadata"
+    aria-label={videoLabel}
+  ></video>
+  <figcaption class="dataset-video-caption">{caption}</figcaption>
+</figure>

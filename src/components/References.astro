@@ -1,0 +1,27 @@
+---
+import { references } from "../data/references";
+---
+
+<section class="content-section references-section" aria-labelledby="references-title">
+  <div class="content-inner">
+    <div class="section-heading">
+      <h2 id="references-title">References</h2>
+    </div>
+
+    <ol class="references-list">
+      {references.map((ref, idx) => (
+        <li id={`ref-${ref.id}`}>
+          <span class="ref-num">[{idx + 1}]</span>
+          <span class="ref-body">
+            <span class="ref-authors">{ref.authors}</span> ({ref.year}).{" "}
+            {ref.url ? (
+              <a class="ref-title" href={ref.url} rel="noopener">{ref.title}</a>
+            ) : (
+              <span class="ref-title">{ref.title}</span>
+            )}{ref.venue && <>. <span class="ref-venue">{ref.venue}</span></>}.
+          </span>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

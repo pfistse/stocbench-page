@@ -1,0 +1,212 @@
+---
+import { charts, samplers } from "../data/benchmark-results";
+---
+
+<figure class="benchmark-figure">
+  <figcaption class="sr-only">Benchmark behavior across inference steps under several samplers.</figcaption>
+
+  <div class="chart-legend" aria-label="Sampler legend">
+    {samplers.map((sampler) => (
+      <span class="legend-item">
+        <span
+          class:list={[
+            "legend-line",
+            sampler.lineStyle === "dashed" && "legend-line--dashed",
+            sampler.lineStyle === "dotted" && "legend-line--dotted",
+          ]}
+          style={`--legend-color: ${sampler.color}`}
+        ></span>
+        {sampler.name}
+      </span>
+    ))}
+  </div>
+
+  <div class="chart-grid">
+    {charts.map((chart, index) => (
+      <article class="chart-panel">
+        <h2>{chart.title}</h2>
+        <div class="chart-frame">
+          <canvas
+            id={`benchmark-chart-${index}`}
+            data-chart={JSON.stringify(chart)}
+            aria-label={`${chart.title} benchmark chart`}
+            role="img"
+          ></canvas>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <div class="figure-caption">
+    <slot name="caption" />
+  </div>
+</figure>
+
+<script>
+  import Chart from "chart.js/auto";
+
+  type ClientPoint = {
+    x: number;
+    y: number;
+  };
+
+  type ClientLineStyle = "solid" | "dashed" | "dotted";
+
+  type ClientSeries = {
+    name: string;
+    color: string;
+    lineStyle?: ClientLineStyle;
+    points: ClientPoint[];
+  };
+
+  type ClientChart = {
+    yMin: number;
+    yMax: number;
+    yLabel: string;
+    series: ClientSeries[];
+  };
+
+  const canvases = document.querySelectorAll("[data-chart]");
+  const fontFamily =
+    "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+  const dashFor = (style: ClientLineStyle | undefined): number[] => {
+    if (style === "dashed") return [9, 6];
+    if (style === "dotted") return [2, 5];
+    return [];
+  };
+
+  canvases.forEach((canvas) => {
+    if (!(canvas instanceof HTMLCanvasElement)) return;
+
+    const chartConfig = JSON.parse(canvas.dataset.chart ?? "{}") as ClientChart;
+
+    const datasets = chartConfig.series.map((series: ClientSeries) => {
+      const isReference = series.lineStyle === "dashed" || series.lineStyle === "dotted";
+      return {
+        label: series.name,
+        data: series.points,
+        borderColor: series.color,
+        backgroundColor: "transparent",
+        borderWidth: isReference ? 1.75 : 2.25,
+        borderCapStyle: (isReference ? "butt" : "round") as CanvasLineCap,
+        borderJoinStyle: "round" as CanvasLineJoin,
+        borderDash: dashFor(series.lineStyle),
+        pointRadius: isReference ? 0 : 3.5,
+        pointHoverRadius: isReference ? 4 : 6,
+        pointBackgroundColor: "#ffffff",
+        pointBorderColor: series.color,
+        pointBorderWidth: 1.75,
+        pointHitRadius: 14,
+        tension: isReference ? 0 : 0.28,
+        spanGaps: true,
+        order: isReference ? 2 : 1,
+      };
+    });
+
+    new Chart(canvas, {
+      type: "line",
+      data: { datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        layout: {
+          padding: {
+            top: 14,
+            right: 14,
+            bottom: 0,
+            left: 4,
+          },
+        },
+        interaction: {
+          mode: "index",
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            enabled: true,
+            backgroundColor: "rgba(15, 15, 18, 0.94)",
+            titleColor: "#fafafa",
+            bodyColor: "#e8e8ee",
+            borderColor: "rgba(255, 255, 255, 0.08)",
+            borderWidth: 1,
+            cornerRadius: 8,
+            padding: 12,
+            titleFont: { family: fontFamily, size: 12, weight: 650 },
+            bodyFont: { family: fontFamily, size: 12, weight: 500 },
+            boxPadding: 6,
+            usePointStyle: true,
+            displayColors: true,
+            callbacks: {
+              title(items) {
+                const point = items[0]?.raw as ClientPoint | undefined;
+                return point ? `Inference steps: ${point.x}` : "";
+              },
+              label(context) {
+                const point = context.raw as ClientPoint;
+                const value = Number(point.y).toFixed(chartConfig.yMax > 1 ? 2 : 3);
+                return `${context.dataset.label}: ${value}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            type: "linear",
+            min: 0,
+            max: 400,
+            title: {
+              display: true,
+              text: "Inference steps",
+              color: "#3a3a44",
+              padding: { top: 8 },
+              font: { family: fontFamily, size: 12, weight: 600 },
+            },
+            ticks: {
+              stepSize: 100,
+              color: "#62626e",
+              padding: 6,
+              font: { family: fontFamily, size: 11, weight: 500 },
+            },
+            grid: {
+              color: "rgba(15, 15, 25, 0.06)",
+              lineWidth: 1,
+              drawTicks: false,
+            },
+            border: {
+              display: false,
+            },
+          },
+          y: {
+            min: chartConfig.yMin,
+            max: chartConfig.yMax,
+            title: {
+              display: true,
+              text: chartConfig.yLabel,
+              color: "#3a3a44",
+              padding: { bottom: 8 },
+              font: { family: fontFamily, size: 12, weight: 600 },
+            },
+            ticks: {
+              color: "#62626e",
+              padding: 6,
+              font: { family: fontFamily, size: 11, weight: 500 },
+            },
+            grid: {
+              color: "rgba(15, 15, 25, 0.06)",
+              lineWidth: 1,
+              drawTicks: false,
+            },
+            border: {
+              display: false,
+            },
+          },
+        },
+      },
+    });
+  });
+</script>

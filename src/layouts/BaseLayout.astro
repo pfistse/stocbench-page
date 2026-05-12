@@ -1,0 +1,21 @@
+---
+import "../styles/global.css";
+
+const {
+  title = "StocBench: A Benchmark for Reliable Stochastic Evaluation",
+  description = "Project page for StocBench, a research benchmark for evaluating stochastic AI systems.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

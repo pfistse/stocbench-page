@@ -1,0 +1,200 @@
+---
+title: "StocBench: A Benchmark for Generative Modeling of Stochastic Dynamics"
+description: "Project page for StocBench, a benchmark for conditional stochastic forecasting in fluid dynamics."
+hero:
+  title: "StocBench: A Benchmark for Generative Modeling of Stochastic Dynamics"
+  authors:
+    - name: "Sebastian Pfister"
+      marker: "1"
+    - name: "Benjamin Holzschuh"
+      marker: "1"
+    - name: "Nils Thuerey"
+      marker: "1"
+  affiliations:
+    - "1 Technical University of Munich"
+  correspondence: "Correspondence: sebastian.pfister@tum.de"
+projectLinks:
+  - label: "arXiv"
+    href: "https://arxiv.org"
+    kind: "arxiv"
+  - label: "GitHub"
+    href: "https://github.com"
+    kind: "github"
+  - label: "Hugging Face"
+    href: "https://huggingface.co"
+    kind: "huggingface"
+  - label: "pip Package"
+    href: "#package-section"
+    kind: "package"
+package:
+  title: "Python Package"
+  installCommand: "pip install stocbench"
+footer:
+  links:
+    - label: "GitHub"
+      href: "https://github.com"
+    - label: "Paper"
+      href: "https://arxiv.org"
+    - label: "arXiv"
+      href: "https://arxiv.org"
+    - label: "Contact"
+      href: "mailto:sebastian.pfister@tum.de"
+---
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import BenchmarkCharts from "../components/BenchmarkCharts.astro";
+import Cite from "../components/Cite.astro";
+import ContentSection from "../components/ContentSection.astro";
+import DatasetPreview from "../components/DatasetPreview.astro";
+import PackageSection from "../components/PackageSection.astro";
+import PaperHero from "../components/PaperHero.astro";
+import References from "../components/References.astro";
+import SectionCard from "../components/SectionCard.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+
+<BaseLayout title={frontmatter.title} description={frontmatter.description}>
+<main>
+<PaperHero {...frontmatter.hero} links={frontmatter.projectLinks}>
+<div slot="abstract">
+Fluid dynamics can be effectively stochastic due to partial observation or strongly chaotic behavior. In such cases, a model should not predict only one future state, but the full distribution of plausible futures. StocBench uses stochastic 2D Kolmogorov flow, following Chen et al. <Cite id="chen2024" />, as a controlled setting where reference conditional statistics can be estimated from solver-generated ensembles. StocBench evaluates how well generative models match the conditional next-step distribution under limited inference budgets.
+</div>
+<DatasetPreview
+caption="Conditional ensemble of next-step vorticity samples for stochastic 2D Kolmogorov flow."
+videoSrc="/videos/stocbench-dataset-placeholder.mp4"
+videoLabel="Animated ensemble of conditional next-step vorticity samples for stochastic Kolmogorov flow"
+widthPercent="50"
+/>
+</PaperHero>
+
+<ContentSection id="benchmark" eyebrow="Benchmark" title="Conditional Stochastic Forecasting" layout="columns-3">
+<SectionCard>
+### Dynamics
+StocBench uses stochastic Kolmogorov flow, a canonical 2D incompressible Navier–Stokes system in vorticity form on a periodic domain. Following the stochastic-forcing setup of Chen et al. <Cite id="chen2024" />, noise is injected through selected Fourier modes. As a result, the same current vorticity field can lead to multiple physically plausible next states.
+</SectionCard>
+<SectionCard>
+### Dataset
+ The training set contains 1,500 trajectories with 200 frames each, yielding 300,000 vorticity frames. Simulations are generated on a 256x256 grid and provided at 128x128 and 64x64 resolutions for training. For evaluation, we use 48 initial conditions. For each one, we compute 3,000 solver-generated next-step samples, based on which reference conditional statistics are estimated.
+</SectionCard>
+<SectionCard>
+### Metrics
+Conditional mean error measures the accuracy of the expected next state, while conditional standard deviation error measures the predicted stochastic spread. Energy distance compares the full predicted and reference conditional distributions. Enstrophy spectrum error measures whether models preserve physically meaningful spectral structure during autoregressive rollout.
+
+</SectionCard>
+</ContentSection>
+
+    <ContentSection id="baselines" eyebrow="Baselines" title="Iterative and Distilled Generators" layout="columns-2" tone="muted">
+      <SectionCard>
+### DDIM, DDPM, DPM
+DDIM, DDPM, and DPM are diffusion-model samplers for score-based generative models. DDIM and DDPM are first-order methods for integrating the probability-flow ODE or reverse-time SDE. DPM-2o is an exponential integrator that uses a second-order method for the non-linear part.
+</SectionCard>
+<SectionCard>
+
+### Flow Matching
+
+Flow Matching learns a time-dependent velocity field that transports Gaussian noise to data. It usually yields probability paths that are straighter than those of diffusion models.
+      </SectionCard>
+      <SectionCard>
+
+### Stochastic Interpolation
+
+Stochastic Interpolation constructs a stochastic bridge between the current state and the target next state. This baseline follows the stochastic-interpolant formulation of Chen et al. <Cite id="chen2024" />.
+
+      </SectionCard>
+      <SectionCard>
+
+### Consistency Distillation and ADD
+
+Consistency Distillation trains a model to produce consistent predictions along the same generative trajectory, enabling one- or few-step sampling. ADD-FM uses adversarial diffusion distillation to train a fast student generator with guidance from a diffusion teacher and a discriminator.
+
+      </SectionCard>
+    </ContentSection>
+
+    <ContentSection id="results" eyebrow="Findings" title="DPM for Few Steps, Flow Matching for Many Steps" layout="columns-1">
+
+DPM-2o performs well with small inference budgets, while Flow Matching approximates the conditional one-step distribution most accurately at larger budgets. Overall, the results show that distilled one-step and few-step methods remain competitive despite their substantially lower sampling cost. CD and ADD-FM are particularly effective at preserving the enstrophy spectrum during autoregressive rollout.
+
+    </ContentSection>
+
+    <BenchmarkCharts>
+      <span slot="caption">Figure 1: The plots report benchmark metrics as a function of inference steps. The panels show conditional mean error, conditional standard deviation error, energy distance, and enstrophy spectrum error. Lower values indicate closer agreement with the solver reference distribution. Curves correspond to multi-step samplers, dotted horizontal lines indicate single- or few-step distilled baselines, and markers show the evaluated inference-step counts.</span>
+    </BenchmarkCharts>
+
+    <References />
+
+    <PackageSection {...frontmatter.package}>
+      <div slot="intro">
+
+StocBench is available as a Python package for evaluating custom models with minimal setup. The package naturally fits into PyTorch Lightning workflows and provides dataset loading, metric computation, and export/plotting utilities.
+
+      </div>
+      <div slot="code">
+
+```python
+import torch
+from pytorch_lightning import Trainer
+from stocbench import Benchmark, IncnsStocDataModule
+
+
+class MyModel:
+    name = "my_model"
+
+    # model is expected to expose a `sample` method
+    def sample(
+        self,
+        cond: torch.Tensor,                       # [batch, channel, height, width]
+        sampling_schedule: tuple[str, int],       # e.g. ("uniform", 100)
+    ) -> torch.Tensor:                            # [batch, channel, height, width]
+        ...
+
+
+# set up datamodule, trainer, and model
+datamodule = IncnsStocDataModule(variant="stochastic", batch_size=16, download=True)
+trainer = Trainer(accelerator="gpu", devices=1, logger=False)
+model = MyModel()
+
+# train your model normally on `datamodule`
+trainer.fit(model, datamodule=datamodule)
+
+# run the benchmark on the trained model
+benchmark = Benchmark(model, datamodule, trainer, output_dir="runs/my_model")
+result = benchmark.evaluate(
+    sampling_schedules="uniform:100",   # or e.g. "uniform:50,uniform:100"
+    ensemble_size=3000,
+    n_inits=48,
+    rollout_steps=10,
+)
+
+# inspect / persist results
+print(result.summary())
+result.to_csv("runs/my_model/results.csv")
+result.plot()
+```
+
+      </div>
+      <div slot="cli">
+
+```bash
+# evaluate a pretrained model
+stocbench eval fm
+
+# example with additional options
+stocbench eval dm --dataset incns_stoc \
+    --sampling-schedules "uniform:10,uniform:20,uniform:30" \
+    --ensemble-size 3000 --n-inits 48 --rollout-steps 10 \
+    --output-dir runs/my_dm_eval
+
+# evaluate your own model
+stocbench eval-custom \
+    --model-class my_pkg.models:MyModel \
+    --checkpoint path/to/ckpt.ckpt --dataset incns_stoc
+
+# render plots for evaluation runs
+stocbench plot runs/my_dm_eval --output-dir plots/
+```
+
+      </div>
+    </PackageSection>
+
+  </main>
+  <SiteFooter {...frontmatter.footer} />
+</BaseLayout>

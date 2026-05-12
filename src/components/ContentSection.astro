@@ -1,0 +1,32 @@
+---
+type Props = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  layout: "columns-1" | "columns-2" | "columns-3";
+  tone?: "default" | "muted";
+};
+
+const {
+  id,
+  eyebrow,
+  title,
+  layout,
+  tone = "default",
+} = Astro.props;
+
+const headingId = `${id}-title`;
+---
+
+<section class:list={["content-section", { "content-section-muted": tone === "muted" }]} aria-labelledby={headingId}>
+  <div class="content-inner">
+    <div class="section-heading">
+      <span>{eyebrow}</span>
+      <h2 id={headingId}>{title}</h2>
+    </div>
+
+    <div class={layout}>
+      <slot />
+    </div>
+  </div>
+</section>

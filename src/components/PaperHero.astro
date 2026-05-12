@@ -1,0 +1,50 @@
+---
+import LinkButtons from "./LinkButtons.astro";
+
+type Author = {
+  name: string;
+  marker?: string;
+};
+
+type ProjectLink = {
+  label: string;
+  href: string;
+  kind: "arxiv" | "github" | "huggingface" | "package";
+};
+
+type Props = {
+  title: string;
+  authors: Author[];
+  affiliations: string[];
+  correspondence?: string;
+  links?: ProjectLink[];
+};
+
+const { title, authors, affiliations, correspondence, links } = Astro.props;
+---
+
+<section class="paper-section" aria-labelledby="project-title">
+  <div class="paper-inner">
+    <header class="paper-header">
+      <h1 id="project-title">{title}</h1>
+      <p class="authors">
+        {authors.map((author, index) => (
+          <span>
+            {author.name}{author.marker && <sup>{author.marker}</sup>}{index < authors.length - 1 && ", "}
+          </span>
+        ))}
+      </p>
+      <p class="affiliations">
+        {affiliations.map((affiliation) => <span>{affiliation}</span>)}
+      </p>
+      {correspondence && <p class="correspondence">{correspondence}</p>}
+      <LinkButtons links={links} />
+    </header>
+
+    <div class="abstract">
+      <slot name="abstract" />
+    </div>
+
+    <slot />
+  </div>
+</section>
